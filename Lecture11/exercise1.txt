@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+
+import string
+import os
+
+os.chdir("/localdisk/home/s1241571/edirect")
+
+linect = 0
+for i in os.listdir():
+	if i[0] == "e" or i[0] == "x":
+		linect = linect+1	
+
+print('number is '+ str(linect))
+
+
+
+
+
+
+
+
