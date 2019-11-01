@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+#import all necessary packages for use throughout the script
+import string
+import os
+import shutil
+import sys
+import subprocess
+
+all_dict={}
+all_dict["name"]   = input("What's your name? ")
+all_dict["age"]    = int(input("How old are you? "))
+all_dict["colour"] = input("What's your favourite colour? ")
+all_dict["like"] = input("Do you like Python? ")
+all_dict["world"]  = input("The world is flat: True or False? ")
+
+def get_user_input(name, age, colour, like, world):
+   for character in name:
+     if character not in string.ascii_letters :
+       return print("\nPlease enter only characters")
+   if like.upper()[0] != "Y" and like.upper()[0] != "N" :
+       print("\nPlease enter Y or N")
+   return "OK",print("\nInput suitable")
+
+get_user_input(all_dict.get('name'),all_dict.get('age'),all_dict.get('colour'),all_dict.get('like'),all_dict.get('world'))
+
+
