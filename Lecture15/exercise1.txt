@@ -1,0 +1,63 @@
+#!/usr/bin/python3
+#import all necessary packages for use throughout the script
+import string
+import os
+import shutil
+import sys
+import subprocess
+import re
+
+#contain the number 5
+#contain the letter d or e
+#contain the letters d and e in that order
+#contain the letters d and e in that order with a single letter between them
+#contain both the letters d and e in any order
+#start with x or y
+#start with x or y and end with e
+#contain three or more numbers in a row
+#end with d followed by either a, r or p
+
+accession_list = ['xkn59438', 'yhdck2', 'eihd39d9', 'chdsye847', 'hedle3455', 'xjhd53e', '45da', 'de37dp']
+
+for accession in accession_list:
+   if re.search(r'5', accession):
+      print ('string 5 is found in ' + accession)
+   else:
+      print('string 5 is NOT found in ' + accession)
+   if re.search(r'(d|e)', accession):
+      print('d or e found ' + accession)
+   else:
+      print('d or e NOT found ' + accession)
+   if re.search(r'(de)', accession):
+      print('de string found ' + accession)
+   else:
+      print('de string NOT found ' + accession)
+   if re.search(r'(d.e)', accession):
+      print('d*e found ' + accession)
+   else:
+      print('d*e NOT found ' + accession)
+   if re.search(r'd', accession) and re.search(r'e', accession): 
+      print('d and e found ' + accession)
+   else:
+      print('d and e NOT found ' + accession)
+# .+ means 1 or more characters
+   if re.search(r'(^x|^y).+e$', accession):
+      print('starts with x or y and ends with e ' + accession)
+   else:
+      print('does NOT start with x or y or end with e ' + accession)   
+   if re.search(r'\d{3,}', accession): 
+      print('contains 3 or more digits ' + accession)
+   else:
+      print('3 or more digits NOT found ' + accession)
+   if re.search(r'd[a|r|p]$', accession):
+      print('ends with with d followed by a, r or p ' + accession)
+   else:
+      print('does NOT end with d followed by a,r, or p ' + accession)  
+
+
+
+
+
+
+
+
