@@ -1,0 +1,87 @@
+#!/usr/bin/python3
+
+import os, sys
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import re
+
+#get the updated file
+#cmd = 'wget -O /localdisk/home/s1241571/LectureExercises/Lecture17/eukaryotes.txt "ftp://#ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/eukaryotes.txt"'
+
+#os.system(cmd) 
+
+df = pd.read_csv('/localdisk/home/s1241571/LectureExercises/Lecture17/eukaryotes.txt', sep="\t", na_values=['-'])
+
+print(df.describe())
+
+print(df.columns)
+
+print(df[['#Organism/Name', 'Size (Mb)', 'GC%']].head())
+
+# Which column do I need to look in?
+print('Fungi' in set(df['Group']))
+
+fungi=df[df.apply( lambda x : x['Size (Mb)'] > 100 and x['Group'] in ['Fungi'], axis=1 )]
+
+print("There are " + str(fungi.shape[0]) + " fungi with gene size greater than 100")
+
+# What are their names?
+# Start with the same query as before, then get the names column
+fungi = df[(df['Group'] == 'Fungi') & (df['Size (Mb)'] > 100)]
+
+# Transform the series object into a simple list of strings
+list(fungi['#Organism/Name'])
+print(list(fungi['#Organism/Name']))
+
+#Question 2 - how many of each Kingdom/group (plants, animals, fungi and protists) have been sequenced? 
+
+print(list(df.columns))
+
+print(df['Group'].value_counts())
+
+print(df.groupby('Group').count())
+
+for Group in ['Plants', 'Animals', 'Fungi', 'Protists']:
+    count = len(df[df['Group'] == Group])
+    count_unique = len(set(df[df['Group'] == Group]['#Organism/Name']))  #turn them into a set will get unique
+    print(Group + " have " + str(count_unique) + " unique counts and " + str(count) + " total/n")
+
+#Question 3 which Heliconius species genomes have been sequenced? 
+
+hel = df[df.apply(lambda x : x['#Organism/Name'].startswith('Heliconius'), axis=1)]
+print(hel[['#Organism/Name', 'Scaffolds']])
+
+# Which center has sequenced the most plant genomes?
+print(df[df['Group'] == 'Plants']['Center'].value_counts().head())
+
+# Which center has sequenced the most insect genomes?
+print(df[df['SubGroup'] == 'Insects']['Center'].value_counts().head())
+
+# Add a column giving the number of proteins per gene
+# first, we do the calculation
+
+df['Proteins'] / df['Genes']
+df['prot_gene'] = df['Proteins'] / df['Genes']
+
+print(df[['#Organism/Name', 'Group', 'prot_gene']].head())
+
+# Which genomes have at least 10% more proteins than genes?
+df[df['Proteins per gene'] >= 1.1][['#Organism/Name', 'Genes','Proteins','Proteins per gene']].head()
+
+# Draw a vertical bar plot which shows the number of genes, number of proteins, 
+# and number of genes per protein for all genomes with at least twice as many proteins as genes.
+ax = df[df['Proteins per gene'] >= 2][['Genes', 'Proteins', 'Proteins per gene']].plot.bar(
+    figsize=(10,8), fontsize=6,
+    secondary_y = ['Proteins per gene'] # tell pandas which value to plot on the secondary y axis
+)
+ax.set_xlabel("Number of genes/proteins")
+plt.title("Title for this lovely plot",color='blue')
+plt.savefig("Lecture17_07.png",transparent=True)
+plt.show()
+
+print("\n".join(os.listdir()))
+print(os.system("ls -lart"))
+
+
+

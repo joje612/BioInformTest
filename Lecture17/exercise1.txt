@@ -1,0 +1,259 @@
+#!/usr/bin/python3
+
+import os, sys
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import re
+
+pd.Series(['a', 'b', 'c', 'd'])
+
+s1 = pd.Series(['a', 'b', 'c', 'd'])
+s2 = pd.Series([2,4,8,16])
+pd.DataFrame({'letter' : s1, 'number' : s2})
+
+df = pd.read_csv('/localdisk/data/BPSM/Lecture17_AI/eukaryotes.txt', sep="\t")
+df.shape
+print(list(df.columns))
+
+#deals with missing values below
+df = pd.read_csv('/localdisk/data/BPSM/Lecture17_AI/eukaryotes.txt', sep="\t", na_values=['-'])
+print(df.describe())
+
+df['#Organism/Name']  #look at a single column of the dataframe
+
+df['#Organism/Name'].value_counts()   #can count unique values and sort them
+
+df['#Organism/Name'] == 'Arabidopsis thaliana'  #returns a boolean but looks through all cols and rows
+
+cress = df[df['#Organism/Name'] == 'Arabidopsis thaliana']  #generates a new dataframe
+
+cress.to_csv("All_the_Arabidopsis_ones.tsv",sep="\t",header=True)  #save new df to a file
+os.system("head -1 All*; wc -l All*")  #deals with open, close etc behind the scenes
+
+# store the sizes as a Series object, then describe() it
+sizes = df[df['#Organism/Name'] == 'Arabidopsis thaliana']['Size (Mb)']
+sizes.describe()
+
+# Use & to join multiple conditions
+# note the brackets around the conditions
+df[(df['Size (Mb)'] > 10000) & (df['Status'] == 'Scaffold')]
+
+#Lambda - Easiest way to think of it is that it acts like a "mini-function" that we can use without #having to #write a bigger "proper" function. 
+
+
+axis=1   # for every row in dataframe. x : x - for every item do this .....
+
+df.apply(lambda x : x['#Organism/Name'].upper(), axis=1).head()
+
+
+# Find birds and mammals with small genome assemblies
+# Which column do I need to look in?
+
+'Birds' in set(df['SubGroup'])  #boolean return
+
+df[df.apply( lambda x : x['Size (Mb)'] < 500 and x['SubGroup'] in ['Birds'], axis=1 )].shape[0]  #how many elements from criteria
+
+birds_n_mammals=df[df.apply( lambda x : x['Size (Mb)'] < 500 and x['SubGroup'] in ['Birds', 'Mammals'], axis=1 )]
+
+# Which are the largest genomes?
+df.sort_values('Size (Mb)', ascending=False).head()   #head will return first 5 rows
+
+df.sort_values('Size (Mb)', ascending=False, inplace=True) #inplace will change the original #dataframe otherwise create a new one
+
+# We can sort on multiple columns if we want
+# sort by name, then within each name with highest GC first
+df.sort_values(['#Organism/Name', 'GC%'], ascending=[True, False]).head()
+
+df['at_content'] = 1 - (df['GC%'] / 100)   # add a new column
+
+#make a new col - out of two parts of Organism Name column - first element
+df['genus'] = df.apply(lambda x : x['#Organism/Name'].split(' ')[0], axis=1)
+
+print(df[['Size (Mb)', 'GC%']].mean()) #table
+
+df[['Size (Mb)', 'Genes', 'Proteins', 'GC%']].corr()  #correlation
+
+#read again but with an index 
+df = pd.read_csv('/localdisk/data/BPSM/Lecture17_AI/eukaryotes.txt', sep="\t", na_values=['-'], index_col='Assembly Accession').head()
+
+# We could also use a non-unique index without any issues
+df['#Organism/Name'].value_counts().head()  #not then treated as a normal column when it's been made #an index so can't apply column commands
+
+df.set_index('BioSample Accession').head(2)  #don't ahve to do when reading in - can appy later
+
+df.apply(lambda x : "{} ({})".format(x['#Organism/Name'], x['BioSample Accession']), axis=1)
+#using {} to assign variables of the column names
+
+df.index = df.apply(lambda x : "{} ({})".format(x['#Organism/Name'], x['BioSample Accession']), axis=1)  #can then make this the index
+
+# Single rows 
+#df.iloc[0]  # first row
+#df.iloc[1]  # second row
+#df.iloc[-1] # last row
+
+# Single columns
+#df.iloc[:,0]  # first column
+#df.iloc[:,1]  # second column
+#df.iloc[:,-1] # last column
+
+# Multiple row and column selections
+#df.iloc[0:5]                 # first five rows of dataframe
+#df.iloc[:, 0:2]              # first two columns of data frame with all rows
+#df.iloc[[0,3,6,24], [0,5,6]] # 1st, 4th, 7th, 25th row + 1st 6th 7th columns.
+#df.iloc[0:5, 5:8]            # first 5 rows and 5th 6th 7th columns
+
+#df.loc[<row selection>, <column selection>]
+#df.loc['Glycine max (SAMN00002965)']
+
+# Columns chosen - don't show all
+#df.loc[['Glycine max (SAMN00002965)','Solanum lycopersicum (SAMN02981290)'],['TaxID','Size (Mb)','GC%','Genes']]
+
+#df.loc[df['#Organism/Name']=='Venturia inaequalis']   #choose by boolean
+
+df['GC%'].head(25).plot.barh() #horizontal bar chart
+plt.xticks(fontsize=6)
+plt.xlabel('xlabel @ 18, marks at 6', fontsize=18)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_01_fonted.png",transparent=True)
+plt.show()
+
+# Plot numbers of genes and proteins for the fifty genomes with the most genes
+df.sort_values('Genes', ascending=False)[:50][['Genes', 'Proteins']].plot.barh()
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_02.png",transparent=True)
+plt.show()
+
+# Stacked bar
+df.sort_values('Genes', ascending=False)[:50][['Genes', 'Proteins']].plot.barh(stacked="true")
+plt.xticks(fontsize=6)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_02_stacked.png",transparent=True)
+plt.show()
+
+#scatter
+df.plot.scatter(y='Genes',x='Size (Mb)')
+plt.title('Why is there no title?!')
+plt.xticks(fontsize=6)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_02_scatter2.png",transparent=True)
+plt.show()
+
+#change size with figsize
+df.sort_values('Genes', ascending=False)[:10][['Genes', 'Proteins']].plot.barh(figsize=(10,8))
+plt.xticks(fontsize=6)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_03.png",transparent=True)
+plt.show()
+
+#This method actually returns an object representing the axes, so we can change things once it's #been created 
+ax = df.sort_values('Genes', ascending=False)[:10][['Genes', 'Proteins']].plot.barh(figsize=(10,8))
+ax.set_xlabel("Number of genes/proteins")
+plt.xticks(fontsize=6)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_04.png",transparent=True)
+plt.show()
+
+# Use subplots=True to get multiple stacked plots
+ax = df.sort_values('Genes', ascending=False)[:10][['Genes', 'Proteins', 'Size (Mb)']].plot.barh(
+    figsize=(10,8), 
+    subplots=True,
+    sharex=False    #each one has its own axis
+)
+plt.xticks(fontsize=6)
+plt.yticks(fontsize=6)
+plt.savefig("Lecture17_05.png",transparent=True)
+plt.show()
+
+ax = df.sort_values('Genes', ascending=False)[:10][['Genes', 'Proteins', 'Size (Mb)']].plot.barh(
+    figsize=(10,8), 
+    subplots=True,
+    sharex=True,
+    fontsize=6 
+)
+plt.savefig("Lecture17_06_fonted.png",transparent=True)
+plt.show()
+
+df['Genes'].agg(['max','min','mean','std']) # a series
+
+#groupby 
+df.groupby('#Organism/Name').mean()
+
+
+df.groupby('#Organism/Name').mean().iloc[:,0:3] #all rows and columns 0to 3
+df.groupby('#Organism/Name').mean().iloc[:,0:3].head(10) #in alpha order
+
+#Blast data
+os.system("head /localdisk/data/BPSM/Lecture17_AI/BacteriavsAMRfinderDB.tsv")
+
+df2=pd.read_csv('/localdisk/data/BPSM/Lecture17_AI/BacteriavsAMRfinderDB.tsv',sep="\t",header=None)
+df2.columns   #read in with no headers as none
+
+#add column headers
+blastoutputheadings=["QueryID", "SubjID", "PercMatches", "AlnLength", "Mismatch", "GapOpen", "QueryStart", "QueryEnd", "SubjStart", "SubjEnd", "E-val", "Bitscore", "subjectlen", "queryframe", "subjectframe"]
+df2.columns=blastoutputheadings
+
+df2.columns
+
+# Split to get the bits we want
+df2['labID']    = df2.apply(lambda x: (x.QueryID).split('-')[0], axis=1)
+df2['contigID'] = df2.apply(lambda x: ((x.QueryID).split('|')[0]).split('.')[-1], axis=1)  #takes the last one
+df2['coverage'] = df2.apply(lambda x: int(((x.QueryID).split('|')[2]).split("=")[1]), axis=1)
+
+
+# Use groupby to summarise
+for eachisolate,  groupeddataframe in df2.groupby(['labID']):
+   print("Our isolate is %s"%eachisolate)   #another way to get a variable %
+   print("The top 5 lines of our isolate's dataframe are :")
+   print(groupeddataframe.head(n=5))
+
+
+df2['hitaccession']=df2.apply(lambda x: (x.SubjID).split('|')[1], axis=1)
+df2['hitaccession'].value_counts().head()
+
+df2.apply(lambda x: (x.SubjID).split('|')[1], axis=1).head(5)
+
+#use escape chars
+df2.apply(lambda x: (x.SubjID).split('|')[1], axis=1).str.replace('\.1', '.firstone').head(5)
+  
+#boolean
+df2.apply(lambda x: (x.SubjID).split('|')[1], axis=1).str.replace('\.1', '.firstone').str.contains("C7").head(5)
+
+# Lets search for some text!
+descripts = df2['description']
+
+counter=0
+lookingfor="tetra"
+for item in descripts :
+   if re.search(lookingfor,item):
+     # print("Found in",item)
+     counter +=1
+
+print("Found",lookingfor,counter,"times")
+
+# Use a lambda instead?
+descripts.apply(lambda x:lookingfor in x).value_counts()
+
+#print true ones
+print("Found",lookingfor,descripts.apply(lambda x:lookingfor in x).value_counts()[1],"times")
+
+
+#with error checking if no trues are found
+lookingforterms=['tetra','mercury','lactamase','Lactamase']
+for item in lookingforterms :
+  print("Found",item,descripts.apply(lambda x:item in x).value_counts()[1],"times")
+
+
+# Last but not least, generate a binary presence-absence matrix, useful for clustering patterns
+GS=pd.read_csv('GeneSignalexample.csv')
+GS.columns
+
+#separator - split by _ line by line
+GS['signalID'].str.get_dummies('_').head(5)
+
+#count how many found
+AMRcounts=GS['signalID'].str.get_dummies('_')
+AMRcounts.agg('sum')
+
+
+
